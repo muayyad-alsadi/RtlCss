@@ -1,0 +1,36 @@
+#logo { background: #fff 100% top no-repeat url("/img/bg.gif"); }
+
+#main {
+
+text-align: left;
+left: 20px;
+margin:5px;margin-left:15px;
+background:#acf;
+float: left
+}
+
+#main li.active
+	{
+		margin-left:5px;
+		margin-right:15px;float:right;
+		background: #fff left top no-repeat url("/img/bg.gif");
+		}
+
+@media only screen {
+		div#main {
+			float: right;right:12px;
+		}
+}
+/*
+@media only screen and (max-device-width: 480px) {
+		div#main {
+			float: right;right:12px;
+		}
+}
+*/
+
+@media only screen and (max-device-width: 480px) {
+		div#main {
+			float: right;right:12px;
+		}
+}
