@@ -156,10 +156,10 @@ outline*: same as border
                prefix='*'
             elif style.startswith('-webkit-'):
                prefix='-webkit-'
-               style=style[strlen(prefix):]
+               style=style[len(prefix):]
             elif style.startswith('-moz-'):
                prefix='-moz-'
-               style=style[strlen(prefix):]
+               style=style[len(prefix):]
             if style=='content':
                new_value=flip_text(value)
                if new_value==value: continue
@@ -192,7 +192,7 @@ outline*: same as border
                 other_value=collected.get(prefix+other_style, self.defaults[style])
                 if value==other_value: continue
                 overrides.append(CssStyle(prefix+style, other_value))
-                overrides.append(CssStyle(preifx+other_style, value))
+                overrides.append(CssStyle(prefix+other_style, value))
             elif (style.endswith('-right') or style.endswith('-left')) and self.defaults.has_key(style):
                 other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
                 done.add(prefix+other_style)
@@ -232,7 +232,7 @@ class CssStyle(object):
             top, right, bottom, left = parse_four_sides(self.value)
             if top!=None: return [CssStyle(prefix+style+'-left', left), CssStyle(prefix+style+'-right', right)]
         elif style=='border':
-            width, style, color = parse_border(self.value)
+            width, style, color = prase_border(self.value)
             a=[]
             if width:
                 a.append(CssStyle(prefix+'border-left-width', width))
