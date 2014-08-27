@@ -24,6 +24,11 @@ float: left
 		div#main {
 			float: right;right:12px;
 		}
+.test{float:right;background: #eee;}
+.test{float:right;}
+.test{float:right;border-color: #eee;}
+
+
 }
 /*
 @media only screen and (max-device-width: 480px) {

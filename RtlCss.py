@@ -300,18 +300,18 @@ class CssFile(CssBlock):
             if token=='{':
                 block=CssBlock(last_token)
                 if len(stack)==0: blocks.append(block)
-                else: stack[-1].rules.append(block)
+                else: stack[-1].append(block)
                 stack.append(block)
             elif token=='}':
                 block=stack.pop()
                 if last_token and ':' in last_token:
                     style, value=last_token.split(':', 1)
-                    block.rules.append(CssStyle(style.strip(), value.strip()))
+                    block.append(CssStyle(style.strip(), value.strip()))
                     last_token=None
             elif token==';':
                 if not last_token or ':' not in last_token: last_token==None; continue
                 style, value=last_token.split(':', 1)
-                block.rules.append(CssStyle(style.strip(), value.strip()))
+                block.append(CssStyle(style.strip(), value.strip()))
                 last_token=None
             else:
                 token=token.strip()
