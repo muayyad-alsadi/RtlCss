@@ -101,9 +101,11 @@ class CssBlock(object):
         self.selector=selector
         self.rules=rules or []
     
+    def _render_body(self):
+        return ';\n'.join(map(lambda r: str(r),self.rules)).replace('}\n;\n', '}\n')
+
     def __str__(self):
-        return self.selector+'{' + \
-           ';\n'.join(map(lambda r: str(r),self.rules)).replace('}\n;\n', '}\n') + '}\n'
+        return self.selector+'{' + self._render_body() + '}\n'
 
     def normalize(self, recursive=True):
         self.selector=self.selector.strip()
@@ -181,7 +183,9 @@ outline*: same as border
                    v=try_float(xpos[:-1])
                    if xpos==None: continue
                    xpos=str(100-v)+'%'
-                   if xpos=='50.0%': continue
+                   if zero_re.match(xpos): xpos='left'
+                   elif xpos=='100.0%': xpos='right'
+                   elif xpos=='50.0%': continue
                overrides.append(CssStyle(prefix+style, xpos+' '+ypos))
             elif (style=='clear' or style=='float' or style=='text-align') and \
                (value =='left' or value == 'right'):
@@ -253,47 +257,59 @@ class CssStyle(object):
     
     def __str__(self):
         return self.style+':'+self.value
-def parse_css(css):
-    css=comment_re.sub('', css)
-    blocks=[]
-    block=None
-    last_token=None
-    stack=[]
-    for token in css_token.findall(css):
-        if token=='{':
-            block=CssBlock(last_token)
-            if len(stack)==0: blocks.append(block)
-            else: stack[-1].rules.append(block)
-            stack.append(block)
-        elif token=='}':
-            block=stack.pop()
-            if last_token and ':' in last_token:
+
+class CssFile(CssBlock):
+    def __init__(self, content=None, rules=None):
+        CssBlock.__init__(self, '', rules)
+        if content: self.parse(content)
+
+    def __str__(self):
+        return self._render_body()
+    
+    def get_rtl_override(self):
+        out=[]
+        for block in self.rules:
+            override=block.get_rtl_override()
+            if override: out.append(override)
+        return CssFile(rules=out)
+    
+    def parse(self, css):
+        css=comment_re.sub('', css)
+        blocks=[]
+        block=None
+        last_token=None
+        stack=[]
+        for token in css_token.findall(css):
+            if token=='{':
+                block=CssBlock(last_token)
+                if len(stack)==0: blocks.append(block)
+                else: stack[-1].rules.append(block)
+                stack.append(block)
+            elif token=='}':
+                block=stack.pop()
+                if last_token and ':' in last_token:
+                    style, value=last_token.split(':', 1)
+                    block.rules.append(CssStyle(style.strip(), value.strip()))
+                    last_token=None
+            elif token==';':
+                if not last_token or ':' not in last_token: last_token==None; continue
                 style, value=last_token.split(':', 1)
                 block.rules.append(CssStyle(style.strip(), value.strip()))
                 last_token=None
-        elif token==';':
-            if not last_token or ':' not in last_token: last_token==None; continue
-            style, value=last_token.split(':', 1)
-            block.rules.append(CssStyle(style.strip(), value.strip()))
-            last_token=None
-        else:
-            token=token.strip()
-            if not token: continue
-            last_token=token
-    return blocks
-
-
+            else:
+                token=token.strip()
+                if not token: continue
+                last_token=token
+        self.rules=blocks
+    
 def override_file(input_file):
     output_file=input_file.replace('.min.', '.').replace('.css', '.rtl.css')
-    blocks=parse_css(open(input_file, 'rt').read())
-    for block in blocks: block.normalize()
-    out=[]
-    for block in blocks:
-        override=block.get_rtl_override()
-        if override: out.append(override)
+    css=CssFile(open(input_file, 'rt').read())
+    css.normalize()
+    out=css.get_rtl_override()
     print ' saving [%s] ' % output_file,
     f=open(output_file, 'wt+')
-    f.write('\n'.join(map(lambda b: str(b), out)).replace('\n}', '}').replace('}', '}\n').replace(';\n', ';'))
+    f.write(str(out).replace('\n}', '}').replace('}', '}\n').replace(';\n', ';'))
     f.close()
 
 def main():
