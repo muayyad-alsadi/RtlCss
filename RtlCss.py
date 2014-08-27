@@ -56,7 +56,7 @@ def parse_xpos_ypos(value):
     if len(a)==2: xpos,ypos=a
     else: xpos, ypos=None,None
     if xpos == 'top' or xpos == 'bottom' or ypos == 'right' or ypos == 'left': xpos, ypos=ypos, xpos
-    if xpos == '0' or zero_re.match(xpos): xpos='left'
+    if xpos!=None and (xpos == '0' or zero_re.match(xpos)): xpos='left'
     return xpos, ypos
 
 
@@ -327,7 +327,7 @@ def override_file(input_file):
     out=css.get_rtl_override()
     print ' saving [%s] ' % output_file,
     f=open(output_file, 'wt+')
-    f.write(str(out).replace('\n}', '}').replace('}', '}\n').replace(';\n', ';'))
+    f.write(str(out).replace('\n}', '}').replace(';\n', ';'))
     f.close()
 
 def main():
