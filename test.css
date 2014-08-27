@@ -10,6 +10,12 @@ float: left;
 -moz-border-radius: 4px 3px 6px / 2px 4px;
 }
 
+.search .ac .ac-input-box {
+border-radius: 16px 0 0 16px;
+float: left;
+width: 205px;
+}
+
 #main li.active
 	{
 		margin-left:5px;

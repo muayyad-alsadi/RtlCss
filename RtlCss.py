@@ -219,6 +219,7 @@ outline*: same as border
                if new_value==value: continue
                overrides.append(CssStyle(prefix+style, new_value))
             elif style.startswith('border-') and style.endswith('-radius'):
+               # TODO: handle -moz-border-radius-bottomright, use and 'radius' in style
                if style=='border-radius': continue
                other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
                done.add(prefix+other_style)
@@ -302,10 +303,10 @@ class CssStyle(object):
             top_left, top_right, bottom_right, bottom_left=parse_radius(self.value)
             if top_left!=None:
                 return [
-                    CssStyle(prefix+style+'-top-left', top_left),
-                    CssStyle(prefix+style+'-top-right', top_right),
-                    CssStyle(prefix+style+'-bottom-right', bottom_right),
-                    CssStyle(prefix+style+'-bottom-left', bottom_left),
+                    CssStyle(prefix+'border-top-left-radius', top_left),
+                    CssStyle(prefix+'border-top-right-radius', top_right),
+                    CssStyle(prefix+'border-bottom-right-radius', bottom_right),
+                    CssStyle(prefix+'border-bottom-left-radius', bottom_left),
                   ]
         elif style=='border':
             width, style, color = prase_border(self.value)
