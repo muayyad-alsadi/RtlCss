@@ -6,7 +6,8 @@ text-align: left;
 left: 20px;
 margin:5px;margin-left:15px;
 background:#acf;
-float: left
+float: left;
+-moz-border-radius: 4px 3px 6px / 2px 4px;
 }
 
 #main li.active

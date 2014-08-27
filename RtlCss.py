@@ -48,6 +48,36 @@ def parse_four_sides(value):
     elif l==4: return a[0], a[1], a[2], a[3]
     else: return None, None, None, None
 
+def parse_radius_4_sides(value):
+    top_left, top_right, bottom_right, bottom_left = None, None, None, None
+    a=non_space.findall(value)
+    if len(a)==1:
+        top_left, top_right, bottom_right, bottom_left = a[0], a[0], a[0], a[0]
+    elif len(a)==2:
+        top_left, top_right, bottom_right, bottom_left = a[0], a[1], a[0], a[1]
+    elif len(a)==3:
+        top_left, top_right, bottom_right, bottom_left = a[0], a[1], a[2], a[1]
+    elif len(a)==4:
+        top_left, top_right, bottom_right, bottom_left = a[0], a[1], a[2], a[3]
+    return top_left, top_right, bottom_right, bottom_left
+
+
+
+def parse_radius(value):
+    """
+    see https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius
+    """
+    if '/' in value:
+        horizontal, vertical = value.split('/',  1)
+    else:
+        horizontal, vertical = value, value
+    corners=zip(parse_radius_4_sides(horizontal), 
+        parse_radius_4_sides(vertical))
+    if not corners[0] or corners[0][0]==None: return None, None, None, None
+    top_left, top_right, bottom_right, bottom_left=map(lambda a: a[0]+' '+a[1] if a[0]!=a[1] else a[0], corners)
+    return top_left, top_right, bottom_right, bottom_left
+    
+
 def parse_xpos_ypos(value):
     """
     background-position: xpos ypos;
@@ -97,6 +127,8 @@ class CssBlock(object):
         'outline-width':'medium', 'border-width':'medium',
         'outline-right-width':'medium', 'border-right-width':'medium',
         'outline-left-width':'medium', 'border-left-width':'medium',
+        'border-top-left-radius': '0', 'border-top-right-radius': '0',
+        'border-bottom-right-radius': '0', 'border-bottom-left-radius': '0',
         }
     def __init__(self, selector, rules=None):
         self.selector=selector
@@ -186,12 +218,15 @@ outline*: same as border
                new_value=flip_text(value)
                if new_value==value: continue
                overrides.append(CssStyle(prefix+style, new_value))
-            elif style=='border-radius':
-               # https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius
-               # TODO: we should expend it, this is just a quick optimistic solution
-               a=non_space.findall(value)
-               if len(a)==4:
-                   overrides.append(CssStyle(prefix+style, '%s %s %s %s' % (a[1], a[0], a[3], a[2]) ))
+            elif style.startswith('border-') and style.endswith('-radius'):
+               if style=='border-radius': continue
+               other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
+               done.add(prefix+other_style)
+               value=collected.get(prefix+style, self.defaults[style])
+               other_value=collected.get(prefix+other_style, self.defaults[style])
+               if value==other_value: continue
+               overrides.append(CssStyle(prefix+style, other_value))
+               overrides.append(CssStyle(prefix+other_style, value))
             elif style=='background-position':
                xpos,ypos=parse_xpos_ypos(value)
                if xpos==None: continue
@@ -254,9 +289,24 @@ class CssStyle(object):
             # handle MSIE hack *margin
             prefix='*'
             style=style[1:]
+        elif style.startswith('-webkit-'):
+            prefix='-webkit-'
+            style=style[len(prefix):]
+        elif style.startswith('-moz-'):
+            prefix='-moz-'
+            style=style[len(prefix):]
         if style in self.s1:
             top, right, bottom, left = parse_four_sides(self.value)
             if top!=None: return [CssStyle(prefix+style+'-left', left), CssStyle(prefix+style+'-right', right)]
+        elif style=='border-radius':
+            top_left, top_right, bottom_right, bottom_left=parse_radius(self.value)
+            if top_left!=None:
+                return [
+                    CssStyle(prefix+style+'-top-left', top_left),
+                    CssStyle(prefix+style+'-top-right', top_right),
+                    CssStyle(prefix+style+'-bottom-right', bottom_right),
+                    CssStyle(prefix+style+'-bottom-left', bottom_left),
+                  ]
         elif style=='border':
             width, style, color = prase_border(self.value)
             a=[]
