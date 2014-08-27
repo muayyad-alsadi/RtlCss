@@ -260,14 +260,14 @@ class CssStyle(object):
 
 class CssFile(CssBlock):
     def __init__(self, content=None, rules=None):
-        CssBlock.__init__(self, '', rules)
+        super(CssFile, self).__init__('', rules)
         if content: self.parse(content)
 
     def __str__(self):
         return self._render_body()
     
     def get_rtl_override(self):
-        out=CssBlock.get_rtl_override(self)
+        out=super(CssFile, self).get_rtl_override()
         return CssFile(rules=out.rules)
 
     def parse(self, css):
