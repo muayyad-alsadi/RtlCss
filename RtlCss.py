@@ -267,12 +267,9 @@ class CssFile(CssBlock):
         return self._render_body()
     
     def get_rtl_override(self):
-        out=[]
-        for block in self.rules:
-            override=block.get_rtl_override()
-            if override: out.append(override)
-        return CssFile(rules=out)
-    
+        out=CssBlock.get_rtl_override(self)
+        return CssFile(rules=out.rules)
+
     def parse(self, css):
         css=comment_re.sub('', css)
         blocks=[]
