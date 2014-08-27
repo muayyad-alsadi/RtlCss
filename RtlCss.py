@@ -18,7 +18,7 @@ nested blocks is supported because of things like this
 import sys
 import re
 from collections import OrderedDict
-
+from hashlib import md5
 
 comment_re=re.compile('/\*.*?\*/', re.S | re.M)
 css_token=re.compile('(?:\{|\}|;|[^{};]+)', re.S | re.M)
@@ -81,6 +81,7 @@ def flip_text(text):
     text=text.replace('&rsaquo;', '&bogo;').replace('&lsaquo;', '&rsaquo;').replace('&bogo;', '&lsaquo;')
     return text
 
+# TODO: inherit from list
 class CssBlock(object):
     defaults={
         'left': 'auto', 'right': 'auto',
@@ -99,7 +100,24 @@ class CssBlock(object):
         }
     def __init__(self, selector, rules=None):
         self.selector=selector
-        self.rules=rules or []
+        self.rules=[]
+        self.clear()
+        if rules: self.extend(rules)
+    
+    def clear(self):
+        del self.rules[:]
+        self._hash_set=set()
+
+    def append(self, rule):
+        h = rule.hash()
+        if h in self._hash_set: return
+        self._hash_set.add(h)
+        self.rules.append(rule)
+    
+    def extend(self, rules):
+        for rule in rules: self.append(rule)
+
+    def hash(self): return md5(str(self)).digest()
     
     def _render_body(self):
         return ';\n'.join(map(lambda r: str(r),self.rules)).replace('}\n;\n', '}\n')
@@ -221,6 +239,8 @@ class CssStyle(object):
         self.style=style
         self.value=value
     
+    def hash(self): return md5(str(self)).digest()
+
     def normalize(self):
         self.style=self.style.strip()
         self.value=self.value.strip()
@@ -297,7 +317,8 @@ class CssFile(CssBlock):
                 token=token.strip()
                 if not token: continue
                 last_token=token
-        self.rules=blocks
+        self.clear()
+        self.extend(blocks)
     
 def override_file(input_file):
     output_file=input_file.replace('.min.', '.').replace('.css', '.rtl.css')

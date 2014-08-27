@@ -16,6 +16,10 @@ float: left
 		background: #fff left top no-repeat url("/img/bg.gif");
 		}
 
+.test{float:right;background: #fff;}
+.test{float:right;}
+.test{float:right;border-color: #fff;}
+
 @media only screen {
 		div#main {
 			float: right;right:12px;
