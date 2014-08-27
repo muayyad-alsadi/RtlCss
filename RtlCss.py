@@ -24,7 +24,8 @@ comment_re=re.compile('/\*.*?\*/', re.S | re.M)
 css_token=re.compile('(?:\{|\}|;|[^{};]+)', re.S | re.M)
 non_space=re.compile('(\S+)', re.S | re.M)
 bg_pos_re=re.compile('((?:left|center|right|top|bottom|[\.\d]+(?:em|ex|px|in|cm|mm|pt|pc|%)?)\s+(?:left|center|right|top|bottom|[\.\d]+(?:em|ex|px|in|cm|mm|pt|pc|%)?))', re.S | re.M)
-border_re=re.compile('''^((?:(?P<style>none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|initial|inherit)|(?P<width>[\.\d]+(?:em|ex|px|in|cm|mm|pt|pc|%))|(?P<color>\S+))\s*)+$''', re.S | re.M)
+border_re=re.compile('''^((?:(?P<style>none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|initial|inherit)|(?P<width>[\.\d]+(?:em|ex|px|in|cm|mm|pt|pc|%)?)|(?P<color>\S+))\s*)+$''', re.S | re.M)
+zero_re=re.compile('''\s*^0(\.0*)?\s*(?:em|ex|px|in|cm|mm|pt|pc|%)?\s*$''', re.S | re.M)
 
 def try_int(i):
     r=None
@@ -55,6 +56,7 @@ def parse_xpos_ypos(value):
     if len(a)==2: xpos,ypos=a
     else: xpos, ypos=None,None
     if xpos == 'top' or xpos == 'bottom' or ypos == 'right' or ypos == 'left': xpos, ypos=ypos, xpos
+    if xpos == '0' or zero_re.match(xpos): xpos='left'
     return xpos, ypos
 
 
