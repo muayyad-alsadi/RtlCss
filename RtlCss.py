@@ -386,7 +386,7 @@ def override_file(input_file, excludes=None):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate RTL override CSS')
-    parser.add_argument('-x', '--exclude', help='pass black list file, each line should be type:selector eg. radius:.btn')
+    parser.add_argument('-x', '--exclude', help='pass black list file, each line should be type:selector eg. border-radius:.btn')
     parser.add_argument('files', nargs='+')
     args = vars(parser.parse_args())
     exclude=args.get('exclude', None)
