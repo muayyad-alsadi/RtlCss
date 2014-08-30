@@ -16,6 +16,10 @@ float: left;
 width: 205px;
 }
 
+.btn-group > .btn:first-child {
+border-radius:5px 0 0 10px;
+}
+
 #main li.active
 	{
 		margin-left:5px;

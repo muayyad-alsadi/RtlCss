@@ -17,8 +17,9 @@ nested blocks is supported because of things like this
 
 import sys
 import re
-from collections import OrderedDict
-from hashlib import md5
+import argparse
+
+from collections import OrderedDict, defaultdict
 
 comment_re=re.compile('/\*.*?\*/', re.S | re.M)
 css_token=re.compile('(?:\{|\}|;|[^{};]+)', re.S | re.M)
@@ -138,18 +139,16 @@ class CssBlock(object):
     
     def clear(self):
         del self.rules[:]
-        self._hash_set=set()
+        self._rules_set=set()
 
     def append(self, rule):
-        h = rule.hash()
-        if h in self._hash_set: return
-        self._hash_set.add(h)
+        h = str(rule)
+        if h in self._rules_set: return
+        self._rules_set.add(h)
         self.rules.append(rule)
     
     def extend(self, rules):
         for rule in rules: self.append(rule)
-
-    def hash(self): return md5(str(self)).digest()
     
     def _render_body(self):
         return ';\n'.join(map(lambda r: str(r),self.rules)).replace('}\n;\n', '}\n')
@@ -170,7 +169,7 @@ class CssBlock(object):
             for r in rule.expand(): k[r.style]=r.value
         return k
 
-    def get_rtl_override(self):
+    def get_rtl_override(self, excludes=None):
         """This function can handle the following styles:
 float: right;
 clear: right;
@@ -198,9 +197,11 @@ background: color position/size repeat origin clip attachment image|initial|inhe
 
 outline*: same as border
         """
+        if excludes==None: excludes=defaultdict(list)
         done=set()
         overrides=[]
         collected=self.collect()
+        blackstyles=excludes[self.selector]
         for style, value in collected.iteritems():
             if style in done: continue
             done.add(style)
@@ -214,11 +215,13 @@ outline*: same as border
             elif style.startswith('-moz-'):
                prefix='-moz-'
                style=style[len(prefix):]
+            if style in blackstyles: continue
             if style=='content':
                new_value=flip_text(value)
                if new_value==value: continue
                overrides.append(CssStyle(prefix+style, new_value))
             elif style.startswith('border-') and style.endswith('-radius'):
+               if 'border-radius' in blackstyles: continue
                # TODO: handle -moz-border-radius-bottomright, use and 'radius' in style
                if style=='border-radius': continue
                other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
@@ -264,7 +267,7 @@ outline*: same as border
             
                 
         for rule in filter(lambda r: isinstance(r, CssBlock), self.rules):
-            block=rule.get_rtl_override()
+            block=rule.get_rtl_override(excludes)
             if block: overrides.append(block)
         if not overrides: return None
         return CssBlock(self.selector, overrides)
@@ -274,8 +277,6 @@ class CssStyle(object):
     def __init__(self, style, value):
         self.style=style
         self.value=value
-    
-    def hash(self): return md5(str(self)).digest()
 
     def normalize(self):
         self.style=self.style.strip()
@@ -337,8 +338,9 @@ class CssFile(CssBlock):
     def __str__(self):
         return self._render_body()
     
-    def get_rtl_override(self):
-        out=super(CssFile, self).get_rtl_override()
+    def get_rtl_override(self, excludes=None):
+        if excludes==None: excludes=defaultdict(list)
+        out=super(CssFile, self).get_rtl_override(excludes)
         return CssFile(rules=out.rules)
 
     def parse(self, css):
@@ -371,24 +373,35 @@ class CssFile(CssBlock):
         self.clear()
         self.extend(blocks)
     
-def override_file(input_file):
+def override_file(input_file, excludes=None):
+    if excludes==None: excludes=defaultdict(list)
     output_file=input_file.replace('.min.', '.').replace('.css', '.rtl.css')
     css=CssFile(open(input_file, 'rt').read())
     css.normalize()
-    out=css.get_rtl_override()
+    out=css.get_rtl_override(excludes)
     print ' saving [%s] ' % output_file,
     f=open(output_file, 'wt+')
     f.write(str(out).replace('\n}', '}').replace(';\n', ';'))
     f.close()
 
 def main():
-    for input_file in sys.argv[1:]:
+    parser = argparse.ArgumentParser(description='Generate RTL override CSS')
+    parser.add_argument('-x', '--exclude', help='pass black list file, each line should be type:selector eg. radius:.btn')
+    parser.add_argument('files', nargs='+')
+    args = vars(parser.parse_args())
+    exclude=args.get('exclude', None)
+    excludes=defaultdict(list)
+    if exclude:
+        x=filter(lambda ll: len(ll)==2, map(lambda l: l.split(':', 1), open(exclude, 'rt').readlines()))
+        for style, selector in x:
+            excludes[selector.strip()].append(style.strip())
+    for input_file in args['files']:
         print "generating RTL override for [%s]: ... " % input_file,
         if '.rtl.' in input_file:
             print 'SKIPPED'
             continue
         print ' started ... ',
-        override_file(input_file)
+        override_file(input_file, excludes)
         print ' done'
 
 main()
