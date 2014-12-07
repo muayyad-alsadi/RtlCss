@@ -16,6 +16,14 @@ float: left;
 width: 205px;
 }
 
+.test15 {
+border-color: #acf;
+border-right-color: #fca;
+}
+.test17 {
+margin-left:0;
+}
+
 .btn-group > .btn:first-child {
 border-radius:5px 0 0 10px;
 }

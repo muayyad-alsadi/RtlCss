@@ -256,14 +256,14 @@ outline*: same as border
                 if value==other_value: continue
                 overrides.append(CssStyle(prefix+style, other_value))
                 overrides.append(CssStyle(prefix+other_style, value))
-            elif (style.endswith('-right') or style.endswith('-left')) and self.defaults.has_key(style):
+            elif '-right' in style or '-left' in style:
                 other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
                 done.add(prefix+other_style)
-                value=collected.get(prefix+style, self.defaults[style])
-                other_value=collected.get(prefix+other_style, self.defaults[style])
-                if value==other_value: continue
-                overrides.append(CssStyle(prefix+style, other_value))
-                overrides.append(CssStyle(prefix+other_style, value))
+                value=collected.get(prefix+style, self.defaults.get(style, None))
+                other_value=collected.get(prefix+other_style, self.defaults.get(style, None))
+                if value==other_value and collected.has_key(prefix+style) and collected.has_key(prefix+other_style): continue
+                if other_value!=None: overrides.append(CssStyle(prefix+style, other_value))
+                if value!=None: overrides.append(CssStyle(prefix+other_style, value))
             
                 
         for rule in filter(lambda r: isinstance(r, CssBlock), self.rules):
@@ -299,7 +299,9 @@ class CssStyle(object):
             style=style[len(prefix):]
         if style in self.s1:
             top, right, bottom, left = parse_four_sides(self.value)
-            if top!=None: return [CssStyle(prefix+style+'-left', left), CssStyle(prefix+style+'-right', right)]
+            if '-' in style: base,suffix=style.split('-',1); suffix="-"+suffix
+            else: base,suffix=style, ''
+            if top!=None: return [CssStyle(prefix+base+'-left'+suffix, left), CssStyle(prefix+base+'-right'+suffix, right)]
         elif style=='border-radius':
             top_left, top_right, bottom_right, bottom_left=parse_radius(self.value)
             if top_left!=None:
