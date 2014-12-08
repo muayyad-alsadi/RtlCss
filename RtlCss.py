@@ -112,6 +112,21 @@ def flip_text(text):
     text=text.replace('&rsaquo;', '&bogo;').replace('&lsaquo;', '&rsaquo;').replace('&bogo;', '&lsaquo;')
     return text
 
+ALL_STYLES=[
+    'float', 'clear', 'text-algin',
+    'left', 'right',
+    'margin-left', 'margin-right',
+    'padding-left', 'padding-right',
+    'border-top-left-radius', 'border-top-right-radius',
+    'border-bottom-right-radius', 'border-bottom-left-radius',
+    'outline-right-style', 'border-right-style',
+    'outline-left-style', 'border-left-style',
+    'outline-right-width', 'border-right-width',
+    'outline-left-width', 'border-left-width',
+    'outline-right-color', 'border-right-color',
+    'outline-left-color', 'border-left-color',
+]
+
 # TODO: inherit from list
 class CssBlock(object):
     fallback=set([
@@ -131,8 +146,6 @@ class CssBlock(object):
         ## there is no fallback color by design
         #'outline-right-color', 'border-right-color',
         #'outline-left-color', 'border-left-color',
-        
-        
     ])
     defaults={
         'left': 'auto', 'right': 'auto',
@@ -422,7 +435,8 @@ def main():
     if exclude:
         x=filter(lambda ll: len(ll)==2, map(lambda l: l.split(':', 1), open(exclude, 'rt').readlines()))
         for style, selector in x:
-            excludes[selector.strip()].append(style.strip())
+            if style=='all': excludes[selector.strip()].extend(ALL_STYLES)
+            else: excludes[selector.strip()].append(style.strip())
     for input_file in args['files']:
         print "generating RTL override for [%s]: ... " % input_file,
         if '.rtl.' in input_file:
