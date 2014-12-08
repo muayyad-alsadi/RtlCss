@@ -114,6 +114,26 @@ def flip_text(text):
 
 # TODO: inherit from list
 class CssBlock(object):
+    fallback=set([
+        ## if a style is set here then setting one will set the opposite with the default
+        'left','right',
+        ## margin and padding
+        'margin-left', 'margin-right',
+        'padding-left', 'padding-right',
+        ## radius 
+        'border-top-left-radius', 'border-top-right-radius',
+        'border-bottom-right-radius', 'border-bottom-left-radius',
+        ## things that are not set here
+        #'outline-right-style', 'border-right-style',
+        #'outline-left-style', 'border-left-style',
+        #'outline-right-width', 'border-right-width',
+        #'outline-left-width', 'border-left-width',
+        ## there is no fallback color by design
+        #'outline-right-color', 'border-right-color',
+        #'outline-left-color', 'border-left-color',
+        
+        
+    ])
     defaults={
         'left': 'auto', 'right': 'auto',
         'margin': '0', 'padding': '0',
@@ -226,11 +246,15 @@ outline*: same as border
                if style=='border-radius': continue
                other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
                done.add(prefix+other_style)
-               value=collected.get(prefix+style, self.defaults[style])
-               other_value=collected.get(prefix+other_style, self.defaults[style])
-               if value==other_value: continue
-               overrides.append(CssStyle(prefix+style, other_value))
-               overrides.append(CssStyle(prefix+other_style, value))
+               value=collected.get(prefix+style, None)
+               other_value=collected.get(prefix+other_style, None)
+               if value==other_value and value!=None and other_value!=None: continue
+               # NOTE: if a selector only has only one side, we can just output the opposite
+               # ex. .mydiv{border-top-right-radious:4px} should we output .mydiv{border-top-left-radious:4px}
+               # or we can output the opposite and zero it 
+               # TODO: just like self.fallback below we need runtime tunable and selector specific
+               if style in self.fallback or other_value!=None: overrides.append(CssStyle(prefix+style, other_value or self.defaults[style]))
+               if style in self.fallback or value!=None: overrides.append(CssStyle(prefix+other_style, value or self.defaults[style]))
             elif style=='background-position':
                xpos,ypos=parse_xpos_ypos(value)
                if xpos==None: continue
@@ -251,19 +275,21 @@ outline*: same as border
             elif style=='right' or style=='left':
                 other_style=style.replace('right', 'bogoight').replace('left', 'right').replace('bogoight', 'left')
                 done.add(prefix+other_style)
-                value=collected.get(prefix+style, self.defaults[style])
-                other_value=collected.get(prefix+other_style, self.defaults[style])
-                if value==other_value: continue
-                overrides.append(CssStyle(prefix+style, other_value))
-                overrides.append(CssStyle(prefix+other_style, value))
-            elif '-right' in style or '-left' in style:
+                value=collected.get(prefix+style, None)
+                other_value=collected.get(prefix+other_style, None)
+                if value==other_value and value!=None and other_value!=None: continue
+                # TODO: just like self.fallback below we need runtime tunable and selector specific
+                if style in self.fallback or other_value!=None: overrides.append(CssStyle(prefix+style, other_value or self.defaults[style]))
+                if style in self.fallback or value!=None: overrides.append(CssStyle(prefix+other_style, value or self.defaults[style]))
+            elif ('-right' in style or '-left' in style):
                 other_style=style.replace('-right', '-bogoight').replace('-left', '-right').replace('-bogoight', '-left')
                 done.add(prefix+other_style)
-                value=collected.get(prefix+style, self.defaults.get(style, None))
-                other_value=collected.get(prefix+other_style, self.defaults.get(style, None))
-                if value==other_value and collected.has_key(prefix+style) and collected.has_key(prefix+other_style): continue
-                if other_value!=None: overrides.append(CssStyle(prefix+style, other_value))
-                if value!=None: overrides.append(CssStyle(prefix+other_style, value))
+                value=collected.get(prefix+style, None)
+                other_value=collected.get(prefix+other_style, None)
+                if value==other_value and value!=None and other_value!=None: continue
+                # TODO: make self.fallback runtime tunable and selector specific
+                if style in self.fallback or other_value!=None: overrides.append(CssStyle(prefix+style, other_value or self.defaults[style]))
+                if style in self.fallback or value!=None: overrides.append(CssStyle(prefix+other_style, value or self.defaults[style]))
             
                 
         for rule in filter(lambda r: isinstance(r, CssBlock), self.rules):
