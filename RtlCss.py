@@ -125,6 +125,7 @@ ALL_STYLES=[
     'outline-left-width', 'border-left-width',
     'outline-right-color', 'border-right-color',
     'outline-left-color', 'border-left-color',
+    'background-position',
 ]
 
 # TODO: inherit from list
