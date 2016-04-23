@@ -128,6 +128,8 @@ ALL_STYLES=[
     'background-position',
 ]
 
+space_re=re.compile(r'\s+', re.M | re.S)
+
 # TODO: inherit from list
 class CssBlock(object):
     fallback=set([
@@ -166,7 +168,7 @@ class CssBlock(object):
         'border-bottom-right-radius': '0', 'border-bottom-left-radius': '0',
         }
     def __init__(self, selector, rules=None):
-        self.selector=selector
+        self.selector=space_re.sub(' ', selector).strip()
         self.rules=[]
         self.clear()
         if rules: self.extend(rules)
